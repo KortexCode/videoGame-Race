@@ -1,32 +1,34 @@
 
-//ELEMENTS
-/*Posición que separa a cada elemento*/
+//ELEMENTS AND VARIABLES
+/*Posición que separa a cada elemento y dimensiones del canvas*/
 let elementSize;
 let canvasSize;
 /*Canvas*/
 const canvas = document.getElementById('game');
 const game = canvas.getContext('2d');
 /*Player*/
-const player = {x: null,
-                y: null,}
-/*Buttons*/
-const btnUp = document.getElementById('up');
-const btnDown = document.getElementById('down');
-const btnLeft = document.getElementById('left');
-const btnRight = document.getElementById('right');
+const player = {
+    x: null,
+    y: null,
+    crash : false,
+}
 /*Elements Position*/
 const giftPosition = {
     x : null,
     y : null,
 }
-
 const elementsPositions = {
     tree : [],
     bomb : [],
-    AllPositioned : false,
 }
-
-
+/*Level*/
+let level = 0;
+let lives = 3;
+/*Buttons*/
+const btnUp = document.getElementById('up');
+const btnDown = document.getElementById('down');
+const btnLeft = document.getElementById('left');
+const btnRight = document.getElementById('right');
 
 
 //EVENTS
@@ -65,8 +67,16 @@ function startGame(){
     elementSize = canvasSize/10.1; //10 elementos por cada linea del mapa
     game.font = elementSize-5+'px Vernada';
     game.textAlign = 'end';
+    elementsPositions.tree.splice(0, elementsPositions.tree.length);
+
+    console.log('level',level);
     //Se acoondiciona el mapa a una matrix 10x10
-    let map = maps[2];
+    let map = maps[level];
+    //Niveles terminados
+    if(!map){
+        gameWin();
+        return;
+    }
     const mapRow = map.trim().split('\n'); 
     map = mapRow.map( row => row.trim().split(''));
     //set renderizado
@@ -92,16 +102,12 @@ function startGame(){
                 const treePosition = [];
                 treePosition.push(posX.toFixed(2));
                 treePosition.push(posY.toFixed(2));
-                if (!elementsPositions.AllPositioned){
-                    elementsPositions.tree.push(treePosition);   
-                }
+                elementsPositions.tree.push(treePosition);       
             }
             
         });
 
     });
-    
-    elementsPositions.AllPositioned = true;
     movePlayer();
     
 
@@ -116,6 +122,9 @@ function startGame(){
    /*  game.fillRect(0, 0, 50, 50); */
 }
 console.log(elementsPositions.tree)
+function gameWin(){
+    console.log('Game Over');
+}
 //POSICIONAR JUGADOR Y VERIFICAR COLISIONES
 function movePlayer(){
     //Colisión con regalo
@@ -123,8 +132,9 @@ function movePlayer(){
     const gifColisionY = giftPosition.y == player.y.toFixed(2);
     const giftColision = gifColisionX && gifColisionY;
     if(giftColision){
-        
-        console.log('subiste de nivel');
+        level++;
+        console.log('Subiste de nivel!!');
+        startGame();
     }
     //Renderizado de auto
     game.fillText(emojis['PLAYER'], player.x+4, player.y);
@@ -133,8 +143,26 @@ function movePlayer(){
     elementsPositions.tree.forEach(row => {
         if(row[0] == player.x.toFixed(2) && row[1] == player.y.toFixed(2)){
             game.fillText(emojis['COLLISION'], player.x, player.y);
-        }    
+            playerFail();
+        }  
+        
+
     });
+    return;
+   
+}
+function playerFail(){
+    console.log('¿Pero qué haces, no viste ese árbol?');
+    player.x = null;
+    player.y = null;
+    if(lives<=0){
+        level = 0;
+        lives = 3;
+        startGame();
+    }
+    lives--;
+    console.log('vidasa',lives)
+    startGame();
 }
 
 //PRESIONAR TECLAS Y MOVER JUGADOR
