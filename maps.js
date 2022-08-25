@@ -10,7 +10,7 @@ const emojis = {
   'B':'💣',
   'I': '🎁',
   'PLAYER': '🚖',
-  'BOMB_COLLISION': '🔥',
+  'COLLISION': '🔥',
   'GAME_OVER': '👎',
   'WIN': '🏆',
 };
