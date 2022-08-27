@@ -9,7 +9,7 @@
         <title>Race or Death</title>
     </head>
     <body>
-    
+        
         <div class="game-container">
             <canvas id="game"></canvas>
 
@@ -20,7 +20,13 @@
                 <button id="down">Down <i class="fas fa-solid fa-arrow-down"></i></button>
             </div>
             <div class="messages">
-                <p>Parrafo</p>
+                <div>
+                    <p>Lives: <span id="lives"></span></p>
+                    <p>Time: <span id="time"></span></p>
+                    <p>Record: <span id="record"></span></p>
+                    <p id="mensaje">Comienza la carrera</p>
+                </div>
+                <button id='btnStart' class="btsGame">START GAME</button>
             </div>
         </div>
         <script src="./maps.js"></script>

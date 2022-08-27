@@ -24,13 +24,23 @@ const elementsPositions = {
 /*Level*/
 let level = 0;
 let lives = 3;
+/*Time*/
+let timeStart;
+let clearTime;
+/*Record*/
+let record;
 /*Buttons*/
+let buttonStart = true;
 const btnUp = document.getElementById('up');
 const btnDown = document.getElementById('down');
 const btnLeft = document.getElementById('left');
 const btnRight = document.getElementById('right');
-
-
+const btnStart = document.getElementById('btnStart');
+//HTML TEXT
+let textLives = document.getElementById('lives');
+let textTime = document.getElementById('time');
+let textRecord = document.getElementById('record');
+let textMessage = document.getElementById('mensaje');
 //EVENTS
 /*Load and Reload */
 window.addEventListener('load', resizeCanvas);
@@ -42,18 +52,29 @@ btnUp.addEventListener('click', moveUp);
 btnDown.addEventListener('click', moveDown);
 btnLeft.addEventListener('click', moveLeft);
 btnRight.addEventListener('click', moveRight);
+/*Click in button start*/
+btnStart.addEventListener('click', resizeCanvas); 
 
 //RENDERIZAR TAMAÑO DEL MAPA
 function resizeCanvas(){
     //Breakpoints para el canvas
-    if(window.innerWidth > 900){
-        canvasSize = window.innerHeight * 0.8;   
+    if(window.innerWidth >= 900){
+        canvasSize = window.innerHeight * 0.75;   
     }
-    else if(window.innerWidth > 600 && window.innerWidth < 900){     
+    else if(window.innerWidth >= 800 && window.innerWidth < 900){     
+        canvasSize = window.innerWidth * 0.5;  
+    }
+    else if(window.innerWidth >= 600 && window.innerWidth < 800){     
         canvasSize = window.innerWidth * 0.6;  
     }
+    else if(window.innerWidth >= 430 && window.innerWidth < 600){     
+        canvasSize = window.innerWidth * 0.8;  
+    }
+    else if(window.innerWidth >= 320 && window.innerWidth < 430){     
+        canvasSize = window.innerHeight * 0.5;  
+    }
     else{
-        canvasSize = window.innerWidth * 0.7;
+        canvasSize = window.innerWidth * 0.8;
     }
     //Se establece las medidas del canvas
     canvas.height = canvasSize;
@@ -63,35 +84,50 @@ function resizeCanvas(){
 }
 //RENDERIZAR ELEMENTOS DENTRO DEL MAPA
 function startGame(){
-   
+    console.log('llamaste?')
+    showLives()
     elementSize = canvasSize/10.1; //10 elementos por cada linea del mapa
     game.font = elementSize-5+'px Vernada';
     game.textAlign = 'end';
     elementsPositions.tree.splice(0, elementsPositions.tree.length);
 
-    console.log('level',level);
-    //Se acoondiciona el mapa a una matrix 10x10
+    if(localStorage.getItem('gameRecord')){      
+        textRecord.innerText = localStorage.getItem('gameRecord');       
+    }
+    if(!(localStorage.getItem('gameRecord'))){
+        localStorage.setItem('gameRecord', 0);
+        textRecord.innerText = localStorage.getItem('gameRecord');
+    }
+    if(!timeStart){
+        timeStart = Date.now();
+        clearTime = setInterval(showTime, 100);
+    }
+ 
     let map = maps[level];
     //Niveles terminados
     if(!map){
         gameWin();
         return;
     }
+    //Se acoondiciona el mapa a una matrix 10x10
     const mapRow = map.trim().split('\n'); 
     map = mapRow.map( row => row.trim().split(''));
-    //set renderizado
+    //renderizado de mapa
     game.clearRect(0, 0, canvasSize, canvasSize);
-    //Renderizado del mapa
+    //Renderizado de los objetos del mapa
     map.forEach((row, rowIndex) => {
         row.forEach((col, colIndex) => {
             const posX = elementSize*(colIndex+1.14);
             const posY = elementSize*(rowIndex+0.88);
             game.fillText(emojis[col], posX, posY);
-            if(emojis[col]=='🚧'){
+            if(emojis[col]== emojis['O']){
                 if(!player.x && !player.y){
                     player.x = posX;
-                    player.y = posY;  
+                    player.y = posY; 
+                    
                 }
+                game.fillText(emojis['S'], posX+4, posY); 
+               
             }
             if(emojis[col]=='🎁'){
                 
@@ -109,24 +145,37 @@ function startGame(){
 
     });
     movePlayer();
-    
-
- /*    for(let i = 1; i <= 10; i++){
-        for (let j = 1; j <= 10; j++) {
-           
-            game.fillText(emojis[map[i-1][j-1]], (elementSize)*j, (elementSize)*(i-0.18)); 
-        }    
-    } */
-    /*  game.fillStyle = 'Gold'; */
-    
+    /*  game.fillStyle = 'Gold'; */  
    /*  game.fillRect(0, 0, 50, 50); */
 }
 console.log(elementsPositions.tree)
 function gameWin(){
+    clearInterval(clearTime);
+    showRecord();
     console.log('Game Over');
+}
+function showRecord(){
+    
+    record = ((Date.now()-timeStart)/1000).toFixed(1);
+    console.log('el local actual', localStorage.getItem('gameRecord'));
+    console.log('el record', record)
+    if(record && !(parseInt(localStorage.getItem('gameRecord')))){  
+         
+        localStorage.setItem('gameRecord', record);
+        textRecord.innerText = localStorage.getItem('gameRecord');
+        textMessage.innerText = 'Ganaste y tienes un nuevo record'
+    }  
+    if(record<parseInt(localStorage.getItem('gameRecord'))){
+
+        localStorage.setItem('gameRecord', record);
+        textRecord.innerText = localStorage.getItem('gameRecord');
+        textMessage.innerText = 'Ganaste y has superdo tu record!!'
+
+    }  
 }
 //POSICIONAR JUGADOR Y VERIFICAR COLISIONES
 function movePlayer(){
+    
     //Colisión con regalo
     const gifColisionX = giftPosition.x == player.x.toFixed(2);
     const gifColisionY = giftPosition.y == player.y.toFixed(2);
@@ -152,22 +201,40 @@ function movePlayer(){
    
 }
 function playerFail(){
+    localStorage.removeItem('gameRecord');
     console.log('¿Pero qué haces, no viste ese árbol?');
     player.x = null;
     player.y = null;
-    if(lives<=0){
+    lives--;
+    if(lives==0){
+        timeStart = Date.now();
         level = 0;
         lives = 3;
+        buttonStart = false;
         startGame();
-    }
-    lives--;
-    console.log('vidasa',lives)
+    } 
     startGame();
+}
+function showLives(){
+    const liveArray = new Array(lives).fill(emojis['H']);
+    textLives.innerText = liveArray.join(' ');
+}
+function showTime(){
+
+    textTime.innerText = +(((Date.now()-timeStart)/1000).toFixed(1));
+
+}
+function gameStart(){
+    /* buttonStart = true; */
+    console.log('presionado')
+    resizeCanvas();
 }
 
 //PRESIONAR TECLAS Y MOVER JUGADOR
 function moveByKey(event){
-    
+    if(buttonStart){
+
+    }
     event.key==="ArrowUp" ? moveUp()
     :event.key==="ArrowDown" ? moveDown()
     :event.key==="ArrowRight" ? moveRight()
@@ -176,43 +243,42 @@ function moveByKey(event){
 }
 
 function moveUp(){
-    
+    if(buttonStart){
+        
+    }
     if(!(player.y < elementSize)){
-        console.log('mover arriba');
-       /*  game.fillText(emojis['PLAYER'], player.x, player.y-=(elementSize)); */
        player.y-=elementSize;
         startGame();
     }
    
 }
 function moveDown(){
-        
+    if(buttonStart){
+        console.log('hola')
+    }  
     if(!(player.y > canvasSize-elementSize)){
-        console.log('mover abajo');
-      /*   game.fillText(emojis['PLAYER'], player.x, player.y+=(elementSize)); */
         player.y+=elementSize;
         startGame();
     }
 }
 function moveLeft(){
-    
+    if(buttonStart){
+        
+    }
     if(!(player.x < elementSize*2)){
-        console.log('mover izquierda');
-        /* game.fillText(emojis['PLAYER'], player.x-=(elementSize), player.y); */
-
+        
         player.x-=elementSize;
         startGame();
     }
 }
 function moveRight(){
-  
-    if(!(player.x > canvasSize)){
-        console.log('mover derecha');
-      
-        let prueba = 43.95 + elementSize;
-        /* game.fillText(emojis['PLAYER'], player.x+=(elementSize), player.y); */
-        player.x+=elementSize;
+    if(buttonStart){
         
+    }
+    if(!(player.x > canvasSize)){
+        
+        let prueba = 43.95 + elementSize;
+        player.x+=elementSize;  
         startGame();
     }
 }

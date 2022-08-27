@@ -45,10 +45,19 @@ button:not(:last-child) {
   
 .messages {
     display: flex;
-    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+    width: 460px;
     margin: 0 auto;
-    width: 80%;
-    max-width: 460px;
+}
+.btsGame{
+    width: 100px;
+
+}
+.messages p:last-child{
+    color: rgb(194, 44, 44);
+    font-size: 18px;
+
 }
   
 p {
@@ -58,7 +67,7 @@ p {
 }
   
 @media (max-width: 440px) {
-    button { margin-top: 25px; }
+    button { margin-top: 10px; }
     #right{
         margin-left: 10px;
         margin-right: 0;
