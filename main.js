@@ -53,7 +53,7 @@ btnDown.addEventListener('click', moveDown);
 btnLeft.addEventListener('click', moveLeft);
 btnRight.addEventListener('click', moveRight);
 /*Click in button start*/
-btnStart.addEventListener('click', resizeCanvas); 
+btnStart.addEventListener('click', btnGameStart); 
 
 //RENDERIZAR TAMAÑO DEL MAPA
 function resizeCanvas(){
@@ -84,7 +84,6 @@ function resizeCanvas(){
 }
 //RENDERIZAR ELEMENTOS DENTRO DEL MAPA
 function startGame(){
-    console.log('llamaste?')
     showLives()
     elementSize = canvasSize/10.1; //10 elementos por cada linea del mapa
     game.font = elementSize-5+'px Vernada';
@@ -92,13 +91,15 @@ function startGame(){
     elementsPositions.tree.splice(0, elementsPositions.tree.length);
 
     if(localStorage.getItem('gameRecord')){      
-        textRecord.innerText = localStorage.getItem('gameRecord');       
+        textRecord.innerText = '🏆: '+localStorage.getItem('gameRecord');       
     }
     if(!(localStorage.getItem('gameRecord'))){
         localStorage.setItem('gameRecord', 0);
-        textRecord.innerText = localStorage.getItem('gameRecord');
+        textRecord.innerText = '🏆: '+localStorage.getItem('gameRecord');
     }
+    console.log(timeStart);
     if(!timeStart){
+        console.log('entro!!');
         timeStart = Date.now();
         clearTime = setInterval(showTime, 100);
     }
@@ -148,30 +149,31 @@ function startGame(){
     /*  game.fillStyle = 'Gold'; */  
    /*  game.fillRect(0, 0, 50, 50); */
 }
-console.log(elementsPositions.tree)
 function gameWin(){
     clearInterval(clearTime);
     showRecord();
+    lives = 0;
     console.log('Game Over');
 }
 function showRecord(){
     
     record = ((Date.now()-timeStart)/1000).toFixed(1);
-    console.log('el local actual', localStorage.getItem('gameRecord'));
-    console.log('el record', record)
     if(record && !(parseInt(localStorage.getItem('gameRecord')))){  
          
         localStorage.setItem('gameRecord', record);
-        textRecord.innerText = localStorage.getItem('gameRecord');
-        textMessage.innerText = 'Ganaste y tienes un nuevo record'
+        textRecord.innerText = '🏆: '+localStorage.getItem('gameRecord');
+        textMessage.innerText = 'Ganaste 😃 y tienes un nuevo record!!'
     }  
-    if(record<parseInt(localStorage.getItem('gameRecord'))){
+    else if(record<parseInt(localStorage.getItem('gameRecord'))){
 
         localStorage.setItem('gameRecord', record);
-        textRecord.innerText = localStorage.getItem('gameRecord');
-        textMessage.innerText = 'Ganaste y has superdo tu record!!'
+        textRecord.innerText ='🏆: '+localStorage.getItem('gameRecord');
+        textMessage.innerText = 'Ganaste 😎 y has superado tu record!!'
 
-    }  
+    }
+    else{
+        textMessage.innerText = 'Lo lograste 😉 pero trata de superar tu record!!'
+    }
 }
 //POSICIONAR JUGADOR Y VERIFICAR COLISIONES
 function movePlayer(){
@@ -193,27 +195,23 @@ function movePlayer(){
         if(row[0] == player.x.toFixed(2) && row[1] == player.y.toFixed(2)){
             game.fillText(emojis['COLLISION'], player.x, player.y);
             playerFail();
-        }  
-        
-
+            
+        }      
     });
-    return;
-   
+    return;   
 }
 function playerFail(){
-    localStorage.removeItem('gameRecord');
-    console.log('¿Pero qué haces, no viste ese árbol?');
-    player.x = null;
-    player.y = null;
     lives--;
     if(lives==0){
-        timeStart = Date.now();
-        level = 0;
-        lives = 3;
+        clearInterval(clearTime);
+        textMessage.innerText = 'Has perdido 😫, vuelve a intentarlo'
         buttonStart = false;
-        startGame();
     } 
-    startGame();
+    if(buttonStart){
+        player.x = null;
+        player.y = null;
+        startGame();
+    }   
 }
 function showLives(){
     const liveArray = new Array(lives).fill(emojis['H']);
@@ -221,13 +219,25 @@ function showLives(){
 }
 function showTime(){
 
-    textTime.innerText = +(((Date.now()-timeStart)/1000).toFixed(1));
+    textTime.innerText = '⏰: '+(((Date.now()-timeStart)/1000).toFixed(1));
 
 }
-function gameStart(){
+function btnGameStart(){
     /* buttonStart = true; */
     console.log('presionado')
-    resizeCanvas();
+    if(lives == 0){
+        timeStart = null;
+    }
+    else{
+        timeStart = Date.now()
+    }
+    level = 0;
+    lives = 3;
+    player.x = null;
+    player.y = null;
+    buttonStart = true;
+    textMessage.innerText = 'Comienza la carrera!!'
+    startGame();
 }
 
 //PRESIONAR TECLAS Y MOVER JUGADOR
@@ -244,41 +254,41 @@ function moveByKey(event){
 
 function moveUp(){
     if(buttonStart){
-        
+        if(!(player.y < elementSize)){
+            player.y-=elementSize;
+            startGame();
+        }  
     }
-    if(!(player.y < elementSize)){
-       player.y-=elementSize;
-        startGame();
-    }
+    
    
 }
 function moveDown(){
     if(buttonStart){
-        console.log('hola')
+        if(!(player.y > canvasSize-elementSize)){
+            player.y+=elementSize;
+            startGame();
+        }
     }  
-    if(!(player.y > canvasSize-elementSize)){
-        player.y+=elementSize;
-        startGame();
-    }
+    
 }
 function moveLeft(){
     if(buttonStart){
+        if(!(player.x < elementSize*2)){
         
+            player.x-=elementSize;
+            startGame();
+        } 
     }
-    if(!(player.x < elementSize*2)){
-        
-        player.x-=elementSize;
-        startGame();
-    }
+    
 }
 function moveRight(){
     if(buttonStart){
+        if(!(player.x > canvasSize)){
         
+            let prueba = 43.95 + elementSize;
+            player.x+=elementSize;  
+            startGame();
+        }
     }
-    if(!(player.x > canvasSize)){
-        
-        let prueba = 43.95 + elementSize;
-        player.x+=elementSize;  
-        startGame();
-    }
+    
 }
