@@ -3,6 +3,8 @@
 /*Posición que separa a cada elemento y dimensiones del canvas*/
 let elementSize;
 let canvasSize;
+let reCanvas;
+
 /*Canvas*/
 const canvas = document.getElementById('game');
 const game = canvas.getContext('2d');
@@ -10,7 +12,8 @@ const game = canvas.getContext('2d');
 const player = {
     x: null,
     y: null,
-    crash : false,
+    lastX : null,
+    lastY : null,
 }
 /*Elements Position*/
 const giftPosition = {
@@ -31,6 +34,7 @@ let clearTime;
 let record;
 /*Buttons*/
 let buttonStart = true;
+
 const btnUp = document.getElementById('up');
 const btnDown = document.getElementById('down');
 const btnLeft = document.getElementById('left');
@@ -57,6 +61,12 @@ btnStart.addEventListener('click', btnGameStart);
 
 //RENDERIZAR TAMAÑO DEL MAPA
 function resizeCanvas(){
+
+    if(canvasSize){
+        console.log('entro 1');
+        reCanvas = canvasSize;
+    }
+    
     //Breakpoints para el canvas
     if(window.innerWidth >= 900){
         canvasSize = window.innerHeight * 0.75;   
@@ -79,7 +89,10 @@ function resizeCanvas(){
     //Se establece las medidas del canvas
     canvas.height = canvasSize;
     canvas.width = canvasSize;
+    console.log('el canvas', canvasSize)
+
     
+   
     return  startGame();
 }
 //RENDERIZAR ELEMENTOS DENTRO DEL MAPA
@@ -90,6 +103,7 @@ function startGame(){
     game.textAlign = 'end';
     elementsPositions.tree.splice(0, elementsPositions.tree.length);
 
+
     if(localStorage.getItem('gameRecord')){      
         textRecord.innerText = '🏆: '+localStorage.getItem('gameRecord');       
     }
@@ -97,9 +111,7 @@ function startGame(){
         localStorage.setItem('gameRecord', 0);
         textRecord.innerText = '🏆: '+localStorage.getItem('gameRecord');
     }
-    console.log(timeStart);
     if(!timeStart){
-        console.log('entro!!');
         timeStart = Date.now();
         clearTime = setInterval(showTime, 100);
     }
@@ -115,12 +127,23 @@ function startGame(){
     map = mapRow.map( row => row.trim().split(''));
     //renderizado de mapa
     game.clearRect(0, 0, canvasSize, canvasSize);
+    
     //Renderizado de los objetos del mapa
     map.forEach((row, rowIndex) => {
         row.forEach((col, colIndex) => {
             const posX = elementSize*(colIndex+1.14);
             const posY = elementSize*(rowIndex+0.88);
             game.fillText(emojis[col], posX, posY);
+            if(player.x || player.y){
+                if(player.x.toFixed(2) == (elementSize*(colIndex+1.14)).toFixed(2)){
+                    player.lastX = colIndex;
+                    console.log('lastX', player.lastX);
+                }
+                if(player.y.toFixed(2) == (elementSize*(rowIndex+0.88)).toFixed(2)){
+                    player.lastY = rowIndex;
+                    console.log('lastY', player.lastY);
+                }
+            }
             if(emojis[col]== emojis['O']){
                 if(!player.x && !player.y){
                     player.x = posX;
@@ -128,7 +151,6 @@ function startGame(){
                     
                 }
                 game.fillText(emojis['S'], posX+4, posY); 
-               
             }
             if(emojis[col]=='🎁'){
                 
@@ -143,12 +165,12 @@ function startGame(){
             }
             
         });
-
     });
     movePlayer();
     /*  game.fillStyle = 'Gold'; */  
    /*  game.fillRect(0, 0, 50, 50); */
 }
+//JUEGO TERMINADO Y RECORD
 function gameWin(){
     clearInterval(clearTime);
     showRecord();
@@ -187,9 +209,20 @@ function movePlayer(){
         console.log('Subiste de nivel!!');
         startGame();
     }
-    //Renderizado de auto
-    game.fillText(emojis['PLAYER'], player.x+4, player.y);
-
+    console.log('el recanvas', reCanvas)
+    
+    if(canvasSize > reCanvas || canvasSize < reCanvas){
+        console.log('entro en 2');
+    
+        player.y = elementSize*(player.lastY+0.88);
+        player.x = elementSize*(player.lastX+1.14);
+       
+        game.fillText(emojis['PLAYER'], player.x+4, player.y);      
+    }
+    else{
+        //Renderizado de auto
+        game.fillText(emojis['PLAYER'], player.x+4, player.y);
+    }
     //Colisión con árboles
     elementsPositions.tree.forEach(row => {
         if(row[0] == player.x.toFixed(2) && row[1] == player.y.toFixed(2)){
@@ -213,6 +246,7 @@ function playerFail(){
         startGame();
     }   
 }
+//MOSTRAR VIDAS Y TIEMPO DE CRONÓMETRO
 function showLives(){
     const liveArray = new Array(lives).fill(emojis['H']);
     textLives.innerText = liveArray.join(' ');
@@ -222,6 +256,7 @@ function showTime(){
     textTime.innerText = '⏰: '+(((Date.now()-timeStart)/1000).toFixed(1));
 
 }
+//BOTÓN START GAME
 function btnGameStart(){
     /* buttonStart = true; */
     console.log('presionado')
@@ -235,21 +270,21 @@ function btnGameStart(){
     lives = 3;
     player.x = null;
     player.y = null;
+    player.lastX = null;
+    player.lastY = null;
     buttonStart = true;
     textMessage.innerText = 'Comienza la carrera!!'
     startGame();
 }
-
 //PRESIONAR TECLAS Y MOVER JUGADOR
 function moveByKey(event){
     if(buttonStart){
-
+        event.key==="ArrowUp" ? moveUp()
+        :event.key==="ArrowDown" ? moveDown()
+        :event.key==="ArrowRight" ? moveRight()
+        :event.key==="ArrowLeft" ? moveLeft()
+        :console.log("Tecla sin funciones de movimiento");
     }
-    event.key==="ArrowUp" ? moveUp()
-    :event.key==="ArrowDown" ? moveDown()
-    :event.key==="ArrowRight" ? moveRight()
-    :event.key==="ArrowLeft" ? moveLeft()
-    :console.log("Tecla sin funciones de movimiento");
 }
 
 function moveUp(){
@@ -258,9 +293,7 @@ function moveUp(){
             player.y-=elementSize;
             startGame();
         }  
-    }
-    
-   
+    } 
 }
 function moveDown(){
     if(buttonStart){
@@ -268,8 +301,7 @@ function moveDown(){
             player.y+=elementSize;
             startGame();
         }
-    }  
-    
+    }     
 }
 function moveLeft(){
     if(buttonStart){
@@ -278,17 +310,14 @@ function moveLeft(){
             player.x-=elementSize;
             startGame();
         } 
-    }
-    
+    }   
 }
-function moveRight(){
+function moveRight(){  
     if(buttonStart){
         if(!(player.x > canvasSize)){
         
-            let prueba = 43.95 + elementSize;
             player.x+=elementSize;  
             startGame();
         }
-    }
-    
+    }   
 }
