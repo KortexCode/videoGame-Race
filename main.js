@@ -26,14 +26,14 @@ const elementsPositions = {
 }
 /*Level*/
 let level = 0;
-let lives = 3;
+let lives = 5;
 /*Time*/
 let timeStart;
 let clearTime;
 /*Record*/
 let record;
 /*Buttons*/
-let buttonStart = true;
+let buttonStart = false;
 
 const btnUp = document.getElementById('up');
 const btnDown = document.getElementById('down');
@@ -63,7 +63,6 @@ btnStart.addEventListener('click', btnGameStart);
 function resizeCanvas(){
 
     if(canvasSize){
-        console.log('entro 1');
         reCanvas = canvasSize;
     }
     
@@ -89,7 +88,7 @@ function resizeCanvas(){
     //Se establece las medidas del canvas
     canvas.height = canvasSize;
     canvas.width = canvasSize;
-    console.log('el canvas', canvasSize)
+    
 
     
    
@@ -98,12 +97,13 @@ function resizeCanvas(){
 //RENDERIZAR ELEMENTOS DENTRO DEL MAPA
 function startGame(){
     showLives()
-    elementSize = canvasSize/10.1; //10 elementos por cada linea del mapa
-    game.font = elementSize-5+'px Vernada';
+    
     game.textAlign = 'end';
+
     elementsPositions.tree.splice(0, elementsPositions.tree.length);
-
-
+    if(!timeStart){
+        textTime.innerText = '⏰: 0';
+    }
     if(localStorage.getItem('gameRecord')){      
         textRecord.innerText = '🏆: '+localStorage.getItem('gameRecord');       
     }
@@ -111,20 +111,19 @@ function startGame(){
         localStorage.setItem('gameRecord', 0);
         textRecord.innerText = '🏆: '+localStorage.getItem('gameRecord');
     }
-    if(!timeStart){
-        timeStart = Date.now();
-        clearTime = setInterval(showTime, 100);
-    }
- 
     let map = maps[level];
     //Niveles terminados
     if(!map){
         gameWin();
         return;
     }
-    //Se acoondiciona el mapa a una matrix 10x10
+    //Se acoondiciona el mapa a una matriz 10x10
     const mapRow = map.trim().split('\n'); 
     map = mapRow.map( row => row.trim().split(''));
+    //Distancia por cada elemento del canvas
+    elementSize = canvasSize/(map[0].length+0.1); 
+    game.font = elementSize-5+'px Vernada';
+
     //renderizado de mapa
     game.clearRect(0, 0, canvasSize, canvasSize);
     
@@ -133,15 +132,18 @@ function startGame(){
         row.forEach((col, colIndex) => {
             const posX = elementSize*(colIndex+1.14);
             const posY = elementSize*(rowIndex+0.88);
-            game.fillText(emojis[col], posX, posY);
+            if(!(emojis[col] == emojis['B'])){
+                game.fillText(emojis[col], posX, posY);
+            }
+            if(emojis[col] == emojis['B']){
+                game.fillText(emojis[col], posX+5, posY);
+            }
             if(player.x || player.y){
                 if(player.x.toFixed(2) == (elementSize*(colIndex+1.14)).toFixed(2)){
                     player.lastX = colIndex;
-                    console.log('lastX', player.lastX);
                 }
                 if(player.y.toFixed(2) == (elementSize*(rowIndex+0.88)).toFixed(2)){
                     player.lastY = rowIndex;
-                    console.log('lastY', player.lastY);
                 }
             }
             if(emojis[col]== emojis['O']){
@@ -152,16 +154,22 @@ function startGame(){
                 }
                 game.fillText(emojis['S'], posX+4, posY); 
             }
-            if(emojis[col]=='🎁'){
+            if(emojis[col]==emojis['I']){
                 
                 giftPosition.x = posX.toFixed(2);
                 giftPosition.y = posY.toFixed(2);              
             }
-            if(emojis[col]=='🌲'){
+            if(emojis[col]==emojis['X']){
                 const treePosition = [];
                 treePosition.push(posX.toFixed(2));
                 treePosition.push(posY.toFixed(2));
                 elementsPositions.tree.push(treePosition);       
+            }
+            if(emojis[col]==emojis['B']){
+                const bombPosition = [];
+                bombPosition.push(posX.toFixed(2));
+                bombPosition.push(posY.toFixed(2));
+                elementsPositions.bomb.push(bombPosition);       
             }
             
         });
@@ -174,8 +182,7 @@ function startGame(){
 function gameWin(){
     clearInterval(clearTime);
     showRecord();
-    lives = 0;
-    console.log('Game Over');
+    timeStart = null;
 }
 function showRecord(){
     
@@ -205,28 +212,40 @@ function movePlayer(){
     const gifColisionY = giftPosition.y == player.y.toFixed(2);
     const giftColision = gifColisionX && gifColisionY;
     if(giftColision){
+        game.fillText(emojis['PLAYER'], player.x+4, player.y);
         level++;
-        console.log('Subiste de nivel!!');
+        player.x = null;
+        player.y = null;
         startGame();
     }
-    console.log('el recanvas', reCanvas)
-    
     if(canvasSize > reCanvas || canvasSize < reCanvas){
-        console.log('entro en 2');
     
         player.y = elementSize*(player.lastY+0.88);
         player.x = elementSize*(player.lastX+1.14);
-       
+        console.log(player.x, player.y);
         game.fillText(emojis['PLAYER'], player.x+4, player.y);      
     }
     else{
+       
         //Renderizado de auto
         game.fillText(emojis['PLAYER'], player.x+4, player.y);
     }
     //Colisión con árboles
     elementsPositions.tree.forEach(row => {
+        
         if(row[0] == player.x.toFixed(2) && row[1] == player.y.toFixed(2)){
             game.fillText(emojis['COLLISION'], player.x, player.y);
+            console.log('crash tree');
+            playerFail();
+            
+        }      
+    });
+    //Colisión con bombas
+    elementsPositions.bomb.forEach(row => {
+        if(row[0] == player.x.toFixed(2) && row[1] == player.y.toFixed(2)){
+            game.fillText(emojis['COLLISION'], player.x, player.y);
+            console.log('crash bomba');
+            /* textMessage.innerText = 'Las bombas quitan 2 vidas!! 😝'; */
             playerFail();
             
         }      
@@ -236,9 +255,13 @@ function movePlayer(){
 function playerFail(){
     lives--;
     if(lives==0){
+        
         clearInterval(clearTime);
+        timeStart = null;
         textMessage.innerText = 'Has perdido 😫, vuelve a intentarlo'
+        textLives.innerText = ': 0 ';   
         buttonStart = false;
+        
     } 
     if(buttonStart){
         player.x = null;
@@ -248,8 +271,10 @@ function playerFail(){
 }
 //MOSTRAR VIDAS Y TIEMPO DE CRONÓMETRO
 function showLives(){
+   
     const liveArray = new Array(lives).fill(emojis['H']);
     textLives.innerText = liveArray.join(' ');
+    
 }
 function showTime(){
 
@@ -258,16 +283,22 @@ function showTime(){
 }
 //BOTÓN START GAME
 function btnGameStart(){
-    /* buttonStart = true; */
-    console.log('presionado')
-    if(lives == 0){
+    if(!timeStart){
+        console.log('puso a correr')
+        timeStart = Date.now();
+        clearTime = setInterval(showTime, 100);
+        textTime.innerText = '⏰: 0';
+    }
+   /*  if(lives == 0){
+        console.log('entro 0');
         timeStart = null;
-    }
-    else{
+    } */
+    /* else{
+        console.log('entro 1');
         timeStart = Date.now()
-    }
+    } */
     level = 0;
-    lives = 3;
+    lives = 5;
     player.x = null;
     player.y = null;
     player.lastX = null;
