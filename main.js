@@ -26,7 +26,7 @@ const elementsPositions = {
 }
 /*Level*/
 let level = 0;
-let lives = 5;
+let lives = 3;
 /*Time*/
 let timeStart;
 let clearTime;
@@ -101,6 +101,7 @@ function startGame(){
     game.textAlign = 'end';
 
     elementsPositions.tree.splice(0, elementsPositions.tree.length);
+   /*  elementsPositions.bomb.splice(0, elementsPositions.tree.length); */
     if(!timeStart){
         textTime.innerText = '⏰: 0';
     }
@@ -118,8 +119,9 @@ function startGame(){
         return;
     }
     //Se acoondiciona el mapa a una matriz 10x10
-    const mapRow = map.trim().split('\n'); 
+    const mapRow = map.trim().split('\n');
     map = mapRow.map( row => row.trim().split(''));
+
     //Distancia por cada elemento del canvas
     elementSize = canvasSize/(map[0].length+0.1); 
     game.font = elementSize-5+'px Vernada';
@@ -130,21 +132,19 @@ function startGame(){
     //Renderizado de los objetos del mapa
     map.forEach((row, rowIndex) => {
         row.forEach((col, colIndex) => {
-            const posX = elementSize*(colIndex+1.14);
+            const posX = elementSize*(colIndex+1.11);
             const posY = elementSize*(rowIndex+0.88);
-            if(!(emojis[col] == emojis['B'])){
-                game.fillText(emojis[col], posX, posY);
-            }
-            if(emojis[col] == emojis['B']){
-                game.fillText(emojis[col], posX+5, posY);
-            }
+          
+            game.fillText(emojis[col], posX, posY);
+          
             if(player.x || player.y){
-                if(player.x.toFixed(2) == (elementSize*(colIndex+1.14)).toFixed(2)){
+                if(player.x.toFixed(2) == (elementSize*(colIndex+1.11)).toFixed(2)){
                     player.lastX = colIndex;
                 }
                 if(player.y.toFixed(2) == (elementSize*(rowIndex+0.88)).toFixed(2)){
                     player.lastY = rowIndex;
                 }
+                
             }
             if(emojis[col]== emojis['O']){
                 if(!player.x && !player.y){
@@ -152,7 +152,7 @@ function startGame(){
                     player.y = posY; 
                     
                 }
-                game.fillText(emojis['S'], posX+4, posY); 
+                game.fillText(emojis['S'], posX+2, posY); 
             }
             if(emojis[col]==emojis['I']){
                 
@@ -165,18 +165,22 @@ function startGame(){
                 treePosition.push(posY.toFixed(2));
                 elementsPositions.tree.push(treePosition);       
             }
-            if(emojis[col]==emojis['B']){
+          /*   if(emojis[col]==emojis['B']){
                 const bombPosition = [];
                 bombPosition.push(posX.toFixed(2));
                 bombPosition.push(posY.toFixed(2));
                 elementsPositions.bomb.push(bombPosition);       
-            }
+            } */
             
         });
     });
+    console.log('last', player.lastX, player.lastY)
     movePlayer();
+    /*  if(!(emojis[col] == emojis['B'])){
+                game.fillText(emojis[col], posX, posY);
+            } */
     /*  game.fillStyle = 'Gold'; */  
-   /*  game.fillRect(0, 0, 50, 50); */
+    /*  game.fillRect(0, 0, 50, 50); */
 }
 //JUEGO TERMINADO Y RECORD
 function gameWin(){
@@ -212,56 +216,54 @@ function movePlayer(){
     const gifColisionY = giftPosition.y == player.y.toFixed(2);
     const giftColision = gifColisionX && gifColisionY;
     if(giftColision){
-        game.fillText(emojis['PLAYER'], player.x+4, player.y);
+        game.fillText(emojis['PLAYER'], player.x+2, player.y);
         level++;
         player.x = null;
         player.y = null;
         startGame();
+ 
     }
     if(canvasSize > reCanvas || canvasSize < reCanvas){
-    
+       
         player.y = elementSize*(player.lastY+0.88);
-        player.x = elementSize*(player.lastX+1.14);
-        console.log(player.x, player.y);
-        game.fillText(emojis['PLAYER'], player.x+4, player.y);      
+        player.x = elementSize*(player.lastX+1.11);
+        /* console.log(player.x, player.y); */
+        game.fillText(emojis['PLAYER'], player.x+2, player.y);      
     }
     else{
-       
         //Renderizado de auto
-        game.fillText(emojis['PLAYER'], player.x+4, player.y);
+        game.fillText(emojis['PLAYER'], player.x+2, player.y);
     }
+    
     //Colisión con árboles
     elementsPositions.tree.forEach(row => {
         
         if(row[0] == player.x.toFixed(2) && row[1] == player.y.toFixed(2)){
-            game.fillText(emojis['COLLISION'], player.x, player.y);
-            console.log('crash tree');
+            game.fillText(emojis['COLLISION'], player.x-3, player.y);
             playerFail();
             
         }      
     });
-    //Colisión con bombas
-    elementsPositions.bomb.forEach(row => {
+    //Colisión con bombas 
+  /*   elementsPositions.bomb.forEach(row => {
+
         if(row[0] == player.x.toFixed(2) && row[1] == player.y.toFixed(2)){
             game.fillText(emojis['COLLISION'], player.x, player.y);
             console.log('crash bomba');
-            /* textMessage.innerText = 'Las bombas quitan 2 vidas!! 😝'; */
             playerFail();
             
         }      
-    });
+    }); */
     return;   
 }
 function playerFail(){
     lives--;
-    if(lives==0){
-        
+    if(lives==0){ 
+        console.log('entró'); 
         clearInterval(clearTime);
-        timeStart = null;
         textMessage.innerText = 'Has perdido 😫, vuelve a intentarlo'
         textLives.innerText = ': 0 ';   
-        buttonStart = false;
-        
+        buttonStart = false;       
     } 
     if(buttonStart){
         player.x = null;
@@ -277,28 +279,25 @@ function showLives(){
     
 }
 function showTime(){
-
     textTime.innerText = '⏰: '+(((Date.now()-timeStart)/1000).toFixed(1));
 
 }
 //BOTÓN START GAME
 function btnGameStart(){
-    if(!timeStart){
-        console.log('puso a correr')
+    if(timeStart){
+        clearInterval(clearTime);
         timeStart = Date.now();
         clearTime = setInterval(showTime, 100);
-        textTime.innerText = '⏰: 0';
     }
-   /*  if(lives == 0){
-        console.log('entro 0');
-        timeStart = null;
-    } */
-    /* else{
-        console.log('entro 1');
-        timeStart = Date.now()
-    } */
+    if(!timeStart){
+        
+        timeStart = Date.now();
+        clearTime = setInterval(showTime, 100);
+        /* textTime.innerText = '⏰: 0'; */
+    }
+   
     level = 0;
-    lives = 5;
+    lives = 3;
     player.x = null;
     player.y = null;
     player.lastX = null;
