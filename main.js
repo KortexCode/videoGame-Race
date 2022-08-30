@@ -222,6 +222,10 @@ function movePlayer(){
         player.x = elementSize*(player.lastX+1.11);
         
         game.fillText(emojis['PLAYER'], player.x+2, player.y); 
+        if(lives==0){
+            game.fillText(emojis['COLLISION'], player.x-3, player.y);
+        }
+        
         return;     
     }
     else{
