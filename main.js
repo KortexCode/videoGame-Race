@@ -64,8 +64,7 @@ function resizeCanvas(){
 
     if(canvasSize){
         reCanvas = canvasSize;
-    }
-    
+    }  
     //Breakpoints para el canvas
     if(window.innerWidth >= 900){
         canvasSize = window.innerHeight * 0.75;   
@@ -89,9 +88,6 @@ function resizeCanvas(){
     canvas.height = canvasSize;
     canvas.width = canvasSize;
     
-
-    
-   
     return  startGame();
 }
 //RENDERIZAR ELEMENTOS DENTRO DEL MAPA
@@ -102,6 +98,7 @@ function startGame(){
 
     elementsPositions.tree.splice(0, elementsPositions.tree.length);
    /*  elementsPositions.bomb.splice(0, elementsPositions.tree.length); */
+    
     if(!timeStart){
         textTime.innerText = '⏰: 0';
     }
@@ -128,7 +125,7 @@ function startGame(){
 
     //renderizado de mapa
     game.clearRect(0, 0, canvasSize, canvasSize);
-    
+
     //Renderizado de los objetos del mapa
     map.forEach((row, rowIndex) => {
         row.forEach((col, colIndex) => {
@@ -143,14 +140,14 @@ function startGame(){
                 }
                 if(player.y.toFixed(2) == (elementSize*(rowIndex+0.88)).toFixed(2)){
                     player.lastY = rowIndex;
-                }
-                
+                }           
             }
             if(emojis[col]== emojis['O']){
                 if(!player.x && !player.y){
-                    player.x = posX;
-                    player.y = posY; 
-                    
+                    if(!(btnStart == false && level+1 == 5)){
+                        player.x = posX;
+                        player.y = posY; 
+                    }                   
                 }
                 game.fillText(emojis['S'], posX+2, posY); 
             }
@@ -170,24 +167,22 @@ function startGame(){
                 bombPosition.push(posX.toFixed(2));
                 bombPosition.push(posY.toFixed(2));
                 elementsPositions.bomb.push(bombPosition);       
-            } */
-            
+            } */         
         });
     });
-    console.log('last', player.lastX, player.lastY)
     movePlayer();
-    /*  if(!(emojis[col] == emojis['B'])){
+    /*if(!(emojis[col] == emojis['B'])){
                 game.fillText(emojis[col], posX, posY);
-            } */
-    /*  game.fillStyle = 'Gold'; */  
-    /*  game.fillRect(0, 0, 50, 50); */
+    } */
 }
 //JUEGO TERMINADO Y RECORD
 function gameWin(){
     clearInterval(clearTime);
     showRecord();
-    timeStart = null;
+    level=4;
+    buttonStart = false;
 }
+//RECORD
 function showRecord(){
     
     record = ((Date.now()-timeStart)/1000).toFixed(1);
@@ -221,14 +216,13 @@ function movePlayer(){
         player.x = null;
         player.y = null;
         startGame();
- 
     }
     if(canvasSize > reCanvas || canvasSize < reCanvas){
-       
         player.y = elementSize*(player.lastY+0.88);
         player.x = elementSize*(player.lastX+1.11);
-        /* console.log(player.x, player.y); */
-        game.fillText(emojis['PLAYER'], player.x+2, player.y);      
+        
+        game.fillText(emojis['PLAYER'], player.x+2, player.y); 
+        return;     
     }
     else{
         //Renderizado de auto
@@ -240,8 +234,7 @@ function movePlayer(){
         
         if(row[0] == player.x.toFixed(2) && row[1] == player.y.toFixed(2)){
             game.fillText(emojis['COLLISION'], player.x-3, player.y);
-            playerFail();
-            
+            playerFail();         
         }      
     });
     //Colisión con bombas 
@@ -256,10 +249,10 @@ function movePlayer(){
     }); */
     return;   
 }
+//JUGADOR PIERDE
 function playerFail(){
     lives--;
     if(lives==0){ 
-        console.log('entró'); 
         clearInterval(clearTime);
         textMessage.innerText = 'Has perdido 😫, vuelve a intentarlo'
         textLives.innerText = ': 0 ';   
@@ -293,7 +286,6 @@ function btnGameStart(){
         
         timeStart = Date.now();
         clearTime = setInterval(showTime, 100);
-        /* textTime.innerText = '⏰: 0'; */
     }
    
     level = 0;
@@ -316,12 +308,11 @@ function moveByKey(event){
         :console.log("Tecla sin funciones de movimiento");
     }
 }
-
 function moveUp(){
     if(buttonStart){
         if(!(player.y < elementSize)){
             player.y-=elementSize;
-            startGame();
+            resizeCanvas();
         }  
     } 
 }
@@ -329,7 +320,7 @@ function moveDown(){
     if(buttonStart){
         if(!(player.y > canvasSize-elementSize)){
             player.y+=elementSize;
-            startGame();
+            resizeCanvas();
         }
     }     
 }
@@ -338,7 +329,7 @@ function moveLeft(){
         if(!(player.x < elementSize*2)){
         
             player.x-=elementSize;
-            startGame();
+            resizeCanvas();
         } 
     }   
 }
@@ -347,7 +338,7 @@ function moveRight(){
         if(!(player.x > canvasSize)){
         
             player.x+=elementSize;  
-            startGame();
+            resizeCanvas();
         }
     }   
 }

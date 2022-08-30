@@ -55,18 +55,6 @@ maps.push(`
   XXXXXXXXXX
 `);
 maps.push(`
-  XX-----XXX
-  X--XXX-XXX
-  X-XXXX-XXX
-  X---XX---X
-  XXX-XXXX--
-  ----XXXXX-
-  -XXXXX--XI
-  -X---X-XXX
-  ---X-X---O
-  XXXX---XXX
-`);
-maps.push(`
   XXXXXXXXXXXX
   X----------X
   X-XXXX-XXX-X
