@@ -79,7 +79,7 @@ function resizeCanvas(){
         canvasSize = window.innerWidth * 0.8;  
     }
     else if(window.innerWidth >= 320 && window.innerWidth < 430){     
-        canvasSize = window.innerHeight * 0.5;  
+        canvasSize = window.innerWidth * 0.8;  
     }
     else{
         canvasSize = window.innerWidth * 0.8;
